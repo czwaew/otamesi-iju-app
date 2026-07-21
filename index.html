@@ -1,86 +1,177 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#3f7f6d" />
-  <title>お試し移住ナビ</title>
-  <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#176b4d">
+  <meta name="description" content="お試し移住住宅、地域情報、補助金、生活費をまとめて比較できる移住支援アプリ">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <title>お試し移住ナビ Plus</title>
 </head>
 <body>
-  <header class="hero">
+<header class="topbar">
+  <button class="menu-btn" id="menuBtn" aria-label="メニュー">☰</button>
+  <a class="brand" href="#home"><span class="brand-icon">住</span><span><b>お試し移住ナビ</b><small>暮らす前に、地域を体験。</small></span></a>
+  <div class="header-actions">
+    <select id="languageSelect" aria-label="言語">
+      <option value="ja">日本語</option><option value="en">English</option><option value="zh">中文</option>
+    </select>
+    <button class="icon-btn" data-view="favorites">♥ <span id="favCount">0</span></button>
+  </div>
+</header>
+
+<aside class="side-nav" id="sideNav">
+  <button data-view="home">🏠 <span data-i18n="navHome">ホーム</span></button>
+  <button data-view="houses">🔎 <span data-i18n="navHouses">お試し住宅</span></button>
+  <button data-view="map">🗺️ <span data-i18n="navMap">地図・交通</span></button>
+  <button data-view="region">📷 <span data-i18n="navRegion">地域紹介</span></button>
+  <button data-view="support">🎁 <span data-i18n="navSupport">支援制度</span></button>
+  <button data-view="cost">💰 <span data-i18n="navCost">生活費計算</span></button>
+  <button data-view="diagnosis">✨ <span data-i18n="navDiagnosis">自治体診断</span></button>
+  <button data-view="mypage">👤 <span data-i18n="navMypage">マイページ</span></button>
+</aside>
+
+<main>
+<section class="view active" id="view-home">
+  <div class="hero">
     <div>
-      <p class="eyebrow">LOCAL LIFE TRIAL</p>
-      <h1>お試し移住ナビ</h1>
-      <p>気になる地域を見つけ、滞在準備と現地確認をひとつに。</p>
+      <span class="eyebrow">TRIAL MIGRATION PLATFORM</span>
+      <h1 data-i18n="heroTitle">あなたに合う地域と<br>お試し住宅を見つけよう。</h1>
+      <p data-i18n="heroText">住宅、交通、生活費、支援制度をまとめて比較し、移住前の不安を減らします。</p>
+      <div class="actions"><button class="primary" data-view="houses" data-i18n="searchHouse">住宅を探す</button><button class="secondary" data-view="diagnosis" data-i18n="startDiagnosis">自治体診断を始める</button></div>
     </div>
-    <button id="installBtn" class="ghost" hidden>ホーム画面に追加</button>
-  </header>
+    <div class="hero-panel">
+      <div><b>6</b><span>お試し住宅</span></div><div><b>4</b><span>地域</span></div><div><b>3</b><span>支援制度</span></div>
+    </div>
+  </div>
 
-  <main>
-    <section class="stats" aria-label="利用状況">
-      <div><strong id="favoriteCount">0</strong><span>お気に入り</span></div>
-      <div><strong id="taskCount">0</strong><span>準備済み</span></div>
-      <div><strong id="planCount">0</strong><span>予定</span></div>
-    </section>
+  <div class="quick-grid">
+    <button data-view="houses"><span>🏠</span><b>お試し住宅検索</b><small>条件から探す</small></button>
+    <button data-view="map"><span>🗺️</span><b>地図・交通</b><small>生活施設を確認</small></button>
+    <button data-view="cost"><span>💰</span><b>生活費計算</b><small>毎月の費用を試算</small></button>
+    <button data-view="diagnosis"><span>✨</span><b>AI自治体診断</b><small>おすすめ地域を提案</small></button>
+  </div>
 
-    <section class="panel">
-      <div class="section-head">
-        <div><p class="kicker">STEP 1</p><h2>候補地を探す</h2></div>
-      </div>
-      <div class="filters">
-        <input id="searchInput" type="search" placeholder="地域名・特徴で検索" />
-        <select id="typeFilter">
-          <option value="all">すべて</option>
-          <option value="自然">自然重視</option>
-          <option value="仕事">仕事重視</option>
-          <option value="子育て">子育て重視</option>
-        </select>
-      </div>
-      <div id="areaList" class="cards"></div>
-    </section>
+  <section class="content-card">
+    <div class="section-head"><div><span class="eyebrow">RECOMMENDED</span><h2>おすすめ滞在プラン</h2></div><button class="text-btn" data-view="houses">すべて見る →</button></div>
+    <div id="homeRecommendations" class="card-grid"></div>
+  </section>
 
-    <section class="panel">
-      <div class="section-head">
-        <div><p class="kicker">STEP 2</p><h2>申込み・準備チェック</h2></div>
-        <button id="resetTasks" class="text-btn">リセット</button>
-      </div>
-      <div id="taskList" class="checklist"></div>
-      <div class="add-row">
-        <input id="newTask" type="text" placeholder="項目を追加" />
-        <button id="addTask">追加</button>
-      </div>
-    </section>
+  <section class="content-card news">
+    <div class="section-head"><div><span class="eyebrow">NEWS</span><h2>お知らせ</h2></div></div>
+    <article><time>2026.07.20</time><b>夏の移住体験ツアー参加者を募集しています</b></article>
+    <article><time>2026.07.12</time><b>お試し住宅「里山ハウス」の予約枠を追加しました</b></article>
+    <article><time>2026.07.01</time><b>移住支援金の対象要件を更新しました</b></article>
+  </section>
+</section>
 
-    <section class="panel">
-      <div class="section-head">
-        <div><p class="kicker">STEP 3</p><h2>滞在予定を登録</h2></div>
-      </div>
-      <form id="planForm" class="plan-form">
-        <label>地域名<input id="planArea" required placeholder="例：新潟県三条市" /></label>
-        <label>開始日<input id="startDate" type="date" required /></label>
-        <label>終了日<input id="endDate" type="date" required /></label>
-        <label class="wide">現地で確認したいこと<textarea id="memo" rows="3" placeholder="仕事、住まい、買い物、医療、交通など"></textarea></label>
-        <button type="submit">予定を保存</button>
-      </form>
-      <div id="planList" class="plans"></div>
-    </section>
+<section class="view" id="view-houses">
+  <div class="page-title"><span class="eyebrow">TRIAL HOUSE SEARCH</span><h1>お試し住宅を探す</h1><p>地域、人数、料金、設備から比較できます。</p></div>
+  <div class="search-panel">
+    <input id="houseKeyword" placeholder="地域名・住宅名で検索">
+    <select id="areaFilter"><option value="all">すべての地域</option><option>新潟県三条市</option><option>新潟県燕市</option><option>長野県飯山市</option><option>富山県南砺市</option></select>
+    <select id="peopleFilter"><option value="0">人数指定なし</option><option value="1">1名</option><option value="2">2名</option><option value="4">4名以上</option></select>
+    <select id="featureFilter"><option value="all">設備指定なし</option><option>Wi-Fi</option><option>駐車場</option><option>子ども用品</option><option>ペット可</option></select>
+  </div>
+  <div class="result-line"><b id="houseCount"></b><button class="text-btn" id="clearFilters">条件をリセット</button></div>
+  <div id="houseGrid" class="card-grid"></div>
+</section>
 
-    <section class="panel guide">
-      <p class="kicker">現地チェック</p>
-      <h2>移住前に確認したい5項目</h2>
-      <div class="guide-grid">
-        <article><span>01</span><h3>住まい</h3><p>家賃、雪、騒音、駐車場、通信環境を確認。</p></article>
-        <article><span>02</span><h3>仕事</h3><p>求人、通勤時間、副業やリモート勤務環境を確認。</p></article>
-        <article><span>03</span><h3>生活</h3><p>スーパー、病院、役所、金融機関までの距離を確認。</p></article>
-        <article><span>04</span><h3>交通</h3><p>車の必要性、冬季道路、公共交通の本数を確認。</p></article>
-        <article><span>05</span><h3>地域</h3><p>自治会、行事、近所付き合い、相談窓口を確認。</p></article>
-      </div>
-    </section>
-  </main>
+<section class="view" id="view-map">
+  <div class="page-title"><span class="eyebrow">MAP & ACCESS</span><h1>地図・交通アクセス</h1><p>病院、スーパー、学校、観光地と交通環境を確認できます。</p></div>
+  <div class="map-layout">
+    <div class="content-card map-card">
+      <select id="mapAreaSelect"><option value="三条市">新潟県三条市</option><option value="燕市">新潟県燕市</option><option value="飯山市">長野県飯山市</option><option value="南砺市">富山県南砺市</option></select>
+      <iframe id="mapFrame" title="Google Map" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+    </div>
+    <div class="content-card">
+      <h2>周辺施設</h2>
+      <div id="facilityList" class="facility-list"></div>
+      <h2>交通アクセス</h2>
+      <div id="accessInfo" class="access-box"></div>
+    </div>
+  </div>
+</section>
 
-  <footer>お試し移住ナビ｜保存内容はこの端末内に記録されます。</footer>
-  <script src="app.js"></script>
+<section class="view" id="view-region">
+  <div class="page-title"><span class="eyebrow">REGION GUIDE</span><h1>写真・動画で地域紹介</h1><p>仕事、自然、子育て、食、地域文化を紹介します。</p></div>
+  <div id="regionGrid" class="region-grid"></div>
+  <div class="content-card video-card">
+    <div><span class="eyebrow">MOVIE</span><h2>移住体験の流れ</h2><p>地域到着から住宅見学、仕事相談、交流会までの流れを動画風スライドで確認できます。</p></div>
+    <div class="video-placeholder"><button id="playVideo">▶</button><span id="videoText">地域の暮らしを3分で紹介</span></div>
+  </div>
+</section>
+
+<section class="view" id="view-support">
+  <div class="page-title"><span class="eyebrow">SUPPORT SEARCH</span><h1>移住支援金・補助金検索</h1><p>世帯構成や目的に合う制度を絞り込めます。</p></div>
+  <div class="search-panel">
+    <select id="supportArea"><option value="all">すべての地域</option><option>三条市</option><option>燕市</option><option>飯山市</option><option>南砺市</option></select>
+    <select id="supportType"><option value="all">すべての制度</option><option>移住</option><option>住宅</option><option>子育て</option><option>起業</option></select>
+  </div>
+  <div id="supportGrid" class="support-grid"></div>
+</section>
+
+<section class="view" id="view-cost">
+  <div class="page-title"><span class="eyebrow">LIVING COST</span><h1>家賃・生活費シミュレーター</h1><p>現在の生活費と移住後の想定額を比較できます。</p></div>
+  <div class="cost-layout">
+    <form class="content-card" id="costForm">
+      <label>世帯人数<input type="number" id="costPeople" min="1" max="8" value="2"></label>
+      <label>家賃（月額）<input type="number" id="rent" value="55000"></label>
+      <label>食費（月額）<input type="number" id="food" value="45000"></label>
+      <label>光熱費（月額）<input type="number" id="utility" value="18000"></label>
+      <label>交通費・車両費（月額）<input type="number" id="transport" value="28000"></label>
+      <label>通信費（月額）<input type="number" id="communication" value="12000"></label>
+      <label>その他（月額）<input type="number" id="other" value="20000"></label>
+    </form>
+    <div class="content-card result-card">
+      <span>移住後の予想生活費</span><strong id="monthlyTotal">¥0</strong><small>1か月あたり</small>
+      <div class="result-list" id="costBreakdown"></div>
+      <div class="annual">年間予想額 <b id="annualTotal">¥0</b></div>
+      <button class="primary" id="saveSimulation">マイページに保存</button>
+    </div>
+  </div>
+</section>
+
+<section class="view" id="view-diagnosis">
+  <div class="page-title"><span class="eyebrow">AI MATCHING</span><h1>あなたに合う自治体診断</h1><p>5つの質問に答えると、おすすめ地域と滞在プランを提案します。</p></div>
+  <div class="diagnosis-layout">
+    <form id="diagnosisForm" class="content-card question-card">
+      <label>1. 希望する環境<select name="environment"><option value="balance">利便性と自然のバランス</option><option value="city">買い物や交通の便利さ</option><option value="nature">自然の豊かさ</option></select></label>
+      <label>2. 移住の目的<select name="purpose"><option value="work">仕事・転職</option><option value="family">子育て</option><option value="agri">農業・田舎暮らし</option><option value="remote">二拠点・テレワーク</option></select></label>
+      <label>3. 雪への対応<select name="snow"><option value="ok">雪国も検討できる</option><option value="low">雪は少ない方がよい</option></select></label>
+      <label>4. 住まいの希望<select name="house"><option value="compact">便利な住宅</option><option value="old">古民家・広い家</option></select></label>
+      <label>5. 重視する支援<select name="support"><option value="job">仕事</option><option value="child">子育て</option><option value="home">住宅</option><option value="startup">起業</option></select></label>
+      <button class="primary wide" type="submit">AI診断結果を見る</button>
+    </form>
+    <div class="content-card diagnosis-result" id="diagnosisResult"><span class="result-icon">✨</span><h2>質問に答えてください</h2><p>回答から、地域・住宅・滞在日数を提案します。</p></div>
+  </div>
+</section>
+
+<section class="view" id="view-favorites">
+  <div class="page-title"><span class="eyebrow">FAVORITES</span><h1>お気に入り</h1><p>保存した住宅や地域を比較できます。</p></div>
+  <div id="favoriteGrid" class="card-grid"></div>
+</section>
+
+<section class="view" id="view-mypage">
+  <div class="page-title"><span class="eyebrow">MY PAGE</span><h1>マイページ</h1><p>プロフィール、診断結果、生活費試算をこの端末に保存します。</p></div>
+  <div class="mypage-grid">
+    <form class="content-card" id="profileForm"><h2>プロフィール</h2><label>氏名<input id="profileName" placeholder="例：山田 太郎"></label><label>メール<input id="profileEmail" type="email" placeholder="example@email.com"></label><label>移住希望時期<select id="profileTiming"><option>未定</option><option>半年以内</option><option>1年以内</option><option>2〜3年以内</option></select></label><button class="primary" type="submit">保存する</button></form>
+    <div class="content-card"><h2>保存データ</h2><div id="mypageSummary" class="summary-list"></div><button class="danger" id="clearMyData">保存データを削除</button></div>
+  </div>
+</section>
+</main>
+
+<div class="modal hidden" id="houseModal"><div class="modal-card"><button class="modal-close" id="modalClose">×</button><div id="modalContent"></div></div></div>
+<div class="toast" id="toast"></div>
+
+<nav class="bottom-nav">
+  <button data-view="home">🏠<span>ホーム</span></button>
+  <button data-view="houses">🔎<span>住宅</span></button>
+  <button data-view="diagnosis">✨<span>診断</span></button>
+  <button data-view="mypage">👤<span>マイページ</span></button>
+</nav>
+<script src="app.js"></script>
 </body>
 </html>
