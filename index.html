@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#3f7f6d" />
+  <title>お試し移住ナビ</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="hero">
+    <div>
+      <p class="eyebrow">LOCAL LIFE TRIAL</p>
+      <h1>お試し移住ナビ</h1>
+      <p>気になる地域を見つけ、滞在準備と現地確認をひとつに。</p>
+    </div>
+    <button id="installBtn" class="ghost" hidden>ホーム画面に追加</button>
+  </header>
+
+  <main>
+    <section class="stats" aria-label="利用状況">
+      <div><strong id="favoriteCount">0</strong><span>お気に入り</span></div>
+      <div><strong id="taskCount">0</strong><span>準備済み</span></div>
+      <div><strong id="planCount">0</strong><span>予定</span></div>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <div><p class="kicker">STEP 1</p><h2>候補地を探す</h2></div>
+      </div>
+      <div class="filters">
+        <input id="searchInput" type="search" placeholder="地域名・特徴で検索" />
+        <select id="typeFilter">
+          <option value="all">すべて</option>
+          <option value="自然">自然重視</option>
+          <option value="仕事">仕事重視</option>
+          <option value="子育て">子育て重視</option>
+        </select>
+      </div>
+      <div id="areaList" class="cards"></div>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <div><p class="kicker">STEP 2</p><h2>申込み・準備チェック</h2></div>
+        <button id="resetTasks" class="text-btn">リセット</button>
+      </div>
+      <div id="taskList" class="checklist"></div>
+      <div class="add-row">
+        <input id="newTask" type="text" placeholder="項目を追加" />
+        <button id="addTask">追加</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <div><p class="kicker">STEP 3</p><h2>滞在予定を登録</h2></div>
+      </div>
+      <form id="planForm" class="plan-form">
+        <label>地域名<input id="planArea" required placeholder="例：新潟県三条市" /></label>
+        <label>開始日<input id="startDate" type="date" required /></label>
+        <label>終了日<input id="endDate" type="date" required /></label>
+        <label class="wide">現地で確認したいこと<textarea id="memo" rows="3" placeholder="仕事、住まい、買い物、医療、交通など"></textarea></label>
+        <button type="submit">予定を保存</button>
+      </form>
+      <div id="planList" class="plans"></div>
+    </section>
+
+    <section class="panel guide">
+      <p class="kicker">現地チェック</p>
+      <h2>移住前に確認したい5項目</h2>
+      <div class="guide-grid">
+        <article><span>01</span><h3>住まい</h3><p>家賃、雪、騒音、駐車場、通信環境を確認。</p></article>
+        <article><span>02</span><h3>仕事</h3><p>求人、通勤時間、副業やリモート勤務環境を確認。</p></article>
+        <article><span>03</span><h3>生活</h3><p>スーパー、病院、役所、金融機関までの距離を確認。</p></article>
+        <article><span>04</span><h3>交通</h3><p>車の必要性、冬季道路、公共交通の本数を確認。</p></article>
+        <article><span>05</span><h3>地域</h3><p>自治会、行事、近所付き合い、相談窓口を確認。</p></article>
+      </div>
+    </section>
+  </main>
+
+  <footer>お試し移住ナビ｜保存内容はこの端末内に記録されます。</footer>
+  <script src="app.js"></script>
+</body>
+</html>

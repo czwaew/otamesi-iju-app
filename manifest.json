@@ -1,0 +1,12 @@
+{
+  "name":"お試し移住ナビ",
+  "short_name":"移住ナビ",
+  "start_url":"./",
+  "display":"standalone",
+  "background_color":"#f4f0e7",
+  "theme_color":"#3f7f6d",
+  "icons":[
+    {"src":"icon-192.png","sizes":"192x192","type":"image/png"},
+    {"src":"icon-512.png","sizes":"512x512","type":"image/png"}
+  ]
+}
