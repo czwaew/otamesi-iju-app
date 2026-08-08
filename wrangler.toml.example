@@ -1,0 +1,16 @@
+name = "kamo-life-api"
+main = "worker.js"
+compatibility_date = "2026-08-01"
+
+[vars]
+ALLOWED_ORIGIN = "https://czwaew.github.io"
+OPENAI_MODEL = "gpt-5-mini"
+
+# Cloudflare KV を作成後、IDを設定してファイル名を wrangler.toml に変更してください。
+# [[kv_namespaces]]
+# binding = "ANALYTICS"
+# id = "YOUR_KV_NAMESPACE_ID"
+
+# Secrets はファイルに書かず、wrangler secret put で登録:
+# wrangler secret put OPENAI_API_KEY
+# wrangler secret put ADMIN_TOKEN
