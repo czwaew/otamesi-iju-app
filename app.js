@@ -1,317 +1,76 @@
-const $=(s,p=document)=>p.querySelector(s);
-const $$=(s,p=document)=>[...p.querySelectorAll(s)];
+const $=(s,p=document)=>p.querySelector(s);const $$=(s,p=document)=>[...p.querySelectorAll(s)];
+let CFG={apiBase:'',officialAkiyaUrl:'https://www.homes.co.jp/akiyabank/niigata/kamo/',officialEventUrl:'https://www.city.kamo.niigata.jp/event/',officialMigrationUrl:'https://www.city.kamo.niigata.jp/ijyu/'};
 
-$('#menuBtn')?.addEventListener('click',()=>$('#nav')?.classList.toggle('open'));
-$$('#nav a').forEach(a=>a.addEventListener('click',()=>$('#nav')?.classList.remove('open')));
-const bindJumps=()=>$$('[data-jump]').forEach(b=>{
-  if(b.dataset.jumpBound) return;
-  b.dataset.jumpBound='1';
-  b.addEventListener('click',()=>$(b.dataset.jump)?.scrollIntoView({behavior:'smooth'}));
-});
-bindJumps();
+(async function init(){
+  await loadConfig();
+  bindBaseUI();
+  injectStyles();
+  enhanceDiagnosis();
+  injectChecklist();
+  injectLiveData();
+  injectAI();
+  injectAdminLink();
+  bindCalculator();
+  bindGrantModal();
+  bindConsultForm();
+  track('page_view');
+  if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+})();
 
-$$('.tab').forEach(btn=>btn.addEventListener('click',()=>{
-  $$('.tab').forEach(x=>x.classList.remove('active'));
-  $$('.tab-panel').forEach(x=>x.classList.remove('active'));
-  btn.classList.add('active');
-  $('#'+btn.dataset.tab)?.classList.add('active');
-}));
-
-// --- 追加UI: 診断強化 / 移住準備チェック / AI相談 / 情報ハブ ---
-const enhancedStyle=document.createElement('style');
-enhancedStyle.textContent=`
-  .enhanced-section{padding:64px max(20px,calc((100vw - 1120px)/2));}
-  .enhanced-soft{background:#f5faf6;}
-  .enhanced-head{max-width:760px;margin:0 auto 28px;text-align:center}
-  .enhanced-head h2{margin:.25rem 0 .6rem;font-size:clamp(1.7rem,4vw,2.35rem)}
-  .feature-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
-  .feature-card,.ai-card,.check-card{background:#fff;border:1px solid #dce9df;border-radius:18px;padding:20px;box-shadow:0 10px 30px rgba(22,101,52,.07)}
-  .feature-card h3,.ai-card h3,.check-card h3{margin:.2rem 0 .65rem}
-  .feature-icon{font-size:2rem}
-  .official-link{display:inline-flex;margin-top:10px;font-weight:700;color:#166534}
-  .fresh-note{font-size:.82rem;color:#64748b;margin-top:10px}
-  .ai-layout{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:18px;align-items:start}
-  .ai-options{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
-  .ai-chip{border:1px solid #b9d7c0;background:#f2faf4;border-radius:999px;padding:8px 12px;cursor:pointer}
-  .ai-card textarea{width:100%;min-height:110px;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:12px;padding:12px;font:inherit}
-  .ai-answer{white-space:pre-wrap;background:#f7faf8;border-radius:14px;padding:16px;min-height:150px;line-height:1.75}
-  .score-meter{height:12px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin:12px 0}
-  .score-meter>span{display:block;height:100%;background:#16803d;border-radius:999px}
-  .score-row{display:flex;justify-content:space-between;gap:16px;font-size:.94rem}
-  .result-reasons{display:grid;gap:8px;margin:14px 0}
-  .reason-pill{background:#eef8f1;border-radius:10px;padding:9px 11px}
-  .check-list{display:grid;gap:10px;margin:16px 0}
-  .check-item{display:flex;gap:10px;align-items:flex-start;background:#f8fbf9;padding:12px;border-radius:12px}
-  .check-progress{font-weight:800;color:#166534}
-  .section-anchor-nav{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:14px}
-  .section-anchor-nav a{border:1px solid #cae1d0;background:#fff;padding:8px 12px;border-radius:999px;text-decoration:none;color:#14532d;font-size:.9rem}
-  @media(max-width:760px){.feature-grid,.ai-layout{grid-template-columns:1fr}.enhanced-section{padding:46px 16px}}
-`;
-document.head.appendChild(enhancedStyle);
-
-const diagnosisForm=$('#diagnosisForm');
-if(diagnosisForm){
-  const submitBtn=$('button[type="submit"]',diagnosisForm);
-  const extra=document.createElement('div');
-  extra.innerHTML=`
-    <fieldset><legend>6. 車の利用について</legend>
-      <label><input type="radio" name="car" value="yes" required> 日常的に使える</label>
-      <label><input type="radio" name="car" value="sometimes"> 必要に応じて使える</label>
-      <label><input type="radio" name="car" value="no"> できれば車に頼らず暮らしたい</label>
-    </fieldset>
-    <fieldset><legend>7. 雪国での暮らし</legend>
-      <label><input type="radio" name="snow" value="ok" required> 雪かき・冬の運転も含めて前向き</label>
-      <label><input type="radio" name="snow" value="learn"> 不安はあるが準備して慣れたい</label>
-      <label><input type="radio" name="snow" value="concern"> 冬の生活負担はできるだけ避けたい</label>
-    </fieldset>
-    <fieldset><legend>8. 地域との関わり方</legend>
-      <label><input type="radio" name="relation" value="active" required> 地域活動や交流に積極的に参加したい</label>
-      <label><input type="radio" name="relation" value="natural"> 無理のない範囲で交流したい</label>
-      <label><input type="radio" name="relation" value="private"> プライベートを重視したい</label>
-    </fieldset>
-  `;
-  submitBtn?.before(...extra.children);
-  const desc=$('#diagnosis .section-head p:last-child');
-  if(desc) desc.textContent='8つの質問を点数化し、加茂暮らしとの相性と確認ポイントを提案します。';
+function loadConfig(){return new Promise(resolve=>{const s=document.createElement('script');s.src='config.js?v=3';s.onload=()=>{CFG={...CFG,...(window.KAMO_CONFIG||{})};resolve()};s.onerror=resolve;document.head.appendChild(s)})}
+function api(path){return (CFG.apiBase||'').replace(/\/$/,'')+path}
+function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function bindBaseUI(){
+  $('#menuBtn')?.addEventListener('click',()=>$('#nav')?.classList.toggle('open'));
+  $$('#nav a').forEach(a=>a.addEventListener('click',()=>$('#nav')?.classList.remove('open')));
+  document.addEventListener('click',e=>{const b=e.target.closest('[data-jump]');if(b)$(b.dataset.jump)?.scrollIntoView({behavior:'smooth'})});
+  $$('.tab').forEach(btn=>btn.addEventListener('click',()=>{$$('.tab').forEach(x=>x.classList.remove('active'));$$('.tab-panel').forEach(x=>x.classList.remove('active'));btn.classList.add('active');$('#'+btn.dataset.tab)?.classList.add('active')}));
 }
+function injectStyles(){const s=document.createElement('style');s.textContent=`
+.enhanced-section{padding:64px max(20px,calc((100vw - 1120px)/2))}.enhanced-soft{background:#f5faf6}.enhanced-head{max-width:800px;margin:0 auto 28px;text-align:center}.enhanced-head h2{margin:.25rem 0 .6rem;font-size:clamp(1.7rem,4vw,2.35rem)}
+.live-toolbar{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:18px 0}.live-toolbar input,.live-toolbar select{padding:11px 12px;border:1px solid #cbd5e1;border-radius:11px;background:#fff;font:inherit}.live-toolbar input{min-width:min(100%,280px)}
+.live-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}.live-card,.ai-card,.check-card{background:#fff;border:1px solid #dce9df;border-radius:18px;padding:19px;box-shadow:0 10px 30px rgba(22,101,52,.07)}.live-card h3{font-size:1.05rem;margin:.4rem 0}.live-card .meta{font-size:.88rem;color:#64748b}.live-card .price{font-size:1.25rem;font-weight:800;color:#166534}.live-card a{font-weight:700;color:#166534}.source-badge{display:inline-flex;background:#eef8f1;color:#166534;border-radius:999px;padding:4px 9px;font-size:.76rem;font-weight:700}.status{padding:12px 14px;border-radius:12px;background:#f8fbf9;border:1px solid #dce9df;margin:12px 0}.status.warn{background:#fff8df;border-color:#edd58d}.status.error{background:#fff0f0;border-color:#f2b8b8}
+.ai-layout{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:18px;align-items:start}.ai-options{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.ai-chip{border:1px solid #b9d7c0;background:#f2faf4;border-radius:999px;padding:8px 12px;cursor:pointer}.ai-card textarea{width:100%;min-height:130px;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:12px;padding:12px;font:inherit}.ai-answer{white-space:pre-wrap;background:#f7faf8;border-radius:14px;padding:16px;min-height:180px;line-height:1.75}.ai-state{font-size:.82rem;color:#64748b;margin-top:10px}
+.score-meter{height:12px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin:12px 0}.score-meter>span{display:block;height:100%;background:#16803d;border-radius:999px}.score-row{display:flex;justify-content:space-between;gap:16px;font-size:.94rem}.result-reasons{display:grid;gap:8px;margin:14px 0}.reason-pill{background:#eef8f1;border-radius:10px;padding:9px 11px}
+.check-list{display:grid;gap:10px;margin:16px 0}.check-item{display:flex;gap:10px;align-items:flex-start;background:#f8fbf9;padding:12px;border-radius:12px}.check-progress{font-weight:800;color:#166534}.data-tabs{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}.data-tab{border:1px solid #bdd8c4;background:#fff;border-radius:999px;padding:9px 14px;cursor:pointer}.data-tab.active{background:#166534;color:#fff}.data-panel{display:none}.data-panel.active{display:block}.live-footer{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:16px}.admin-pill{display:inline-flex;padding:7px 11px;border-radius:999px;background:#12281a;color:#fff!important;font-size:.82rem;text-decoration:none}.skeleton{animation:pulse 1.4s infinite;background:#edf2ef;border-radius:12px;min-height:130px}@keyframes pulse{50%{opacity:.55}}
+@media(max-width:800px){.live-grid,.ai-layout{grid-template-columns:1fr}.enhanced-section{padding:46px 16px}}
+`;document.head.appendChild(s)}
 
-const support=$('#support');
-if(support){
-  const hub=document.createElement('section');
-  hub.id='infoHub';
-  hub.className='enhanced-section';
-  hub.innerHTML=`
-    <div class="enhanced-head">
-      <p class="eyebrow">LOCAL INFORMATION</p>
-      <h2>住まい・仕事・イベント情報</h2>
-      <p>移住検討で確認したい情報をまとめました。掲載内容は変わるため、最新情報は必ず公式ページでご確認ください。</p>
-      <div class="section-anchor-nav"><a href="#housingInfo">空き家</a><a href="#jobInfo">求人</a><a href="#eventInfo">イベント</a></div>
-    </div>
-    <div class="feature-grid">
-      <article id="housingInfo" class="feature-card">
-        <div class="feature-icon">🏠</div><h3>空き家・住まい</h3>
-        <p>加茂市は全国版空き家バンクを活用した空き家バンクを運用しています。中古住宅・土地探しの入口として確認できます。</p>
-        <a class="official-link" target="_blank" rel="noopener" href="https://www.city.kamo.niigata.jp/docs/30251.html">加茂市 空き家バンク →</a>
-        <p class="fresh-note">物件の募集状況・価格・利用条件はリンク先で確認してください。</p>
-      </article>
-      <article id="jobInfo" class="feature-card">
-        <div class="feature-icon">💼</div><h3>求人・働き方</h3>
-        <p>市内・近隣就職、地域おこし協力隊、創業、リモートワークなど、希望する働き方から情報を探せます。</p>
-        <a class="official-link" target="_blank" rel="noopener" href="https://www.city.kamo.niigata.jp/ijyu/">加茂市 移住定住サイト →</a><br>
-        <a class="official-link" target="_blank" rel="noopener" href="https://www.city.kamo.niigata.jp/shisei/jinji/saiyou/">加茂市 職員採用情報 →</a>
-        <p class="fresh-note">民間求人はハローワーク等も併用すると比較しやすくなります。</p>
-      </article>
-      <article id="eventInfo" class="feature-card">
-        <div class="feature-icon">🎪</div><h3>イベント・地域を知る</h3>
-        <p>イベント参加は、移住前に地域の雰囲気・人との距離感・生活圏を知る機会になります。</p>
-        <a class="official-link" target="_blank" rel="noopener" href="https://www.city.kamo.niigata.jp/event/">加茂市 イベント情報 →</a>
-        <p class="fresh-note">開催日・申込・中止変更などは公式情報をご確認ください。</p>
-      </article>
-    </div>
-  `;
-  support.before(hub);
+function enhanceDiagnosis(){const f=$('#diagnosisForm');if(!f)return;const submit=$('button[type="submit"]',f);if(!f.elements.car){const d=document.createElement('div');d.innerHTML=`<fieldset><legend>6. 車の利用について</legend><label><input type="radio" name="car" value="yes" required> 日常的に使える</label><label><input type="radio" name="car" value="sometimes"> 必要に応じて使える</label><label><input type="radio" name="car" value="no"> できれば車に頼らず暮らしたい</label></fieldset><fieldset><legend>7. 雪国での暮らし</legend><label><input type="radio" name="snow" value="ok" required> 雪かき・冬の運転も含めて前向き</label><label><input type="radio" name="snow" value="learn"> 不安はあるが準備して慣れたい</label><label><input type="radio" name="snow" value="concern"> 冬の生活負担はできるだけ避けたい</label></fieldset><fieldset><legend>8. 地域との関わり方</legend><label><input type="radio" name="relation" value="active" required> 地域活動や交流に積極的に参加したい</label><label><input type="radio" name="relation" value="natural"> 無理のない範囲で交流したい</label><label><input type="radio" name="relation" value="private"> プライベートを重視したい</label></fieldset>`;submit?.before(...d.children)}
+ const desc=$('#diagnosis .section-head p:last-child');if(desc)desc.textContent='8つの質問を点数化し、加茂暮らしとの相性・理由・次の行動を提案します。';
+ f.addEventListener('submit',e=>{e.preventDefault();const d=Object.fromEntries(new FormData(f));const sc={city:0,family:0,challenge:0,nature:0},re=[];
+ if(d.people==='family'){sc.family+=3;re.push('家族での生活基盤を重視')}else if(d.people==='single'){sc.city+=2;sc.challenge++}else{sc.family++;sc.city++}
+ if(d.home==='rent'){sc.city+=3;re.push('まず賃貸で試したい')}if(d.home==='buy'){sc.family+=3;re.push('定住・住宅購入志向')}if(d.home==='old'){sc.challenge+=4;sc.nature++;re.push('空き家活用に関心')}
+ if(d.work==='local'){sc.city+=2;sc.family++}if(d.work==='remote'){sc.nature+=2;sc.city++;re.push('リモートワークを想定')}if(d.work==='startup'){sc.challenge+=4;re.push('起業・地域活動志向')}
+ if(d.priority==='nature'){sc.nature+=4;re.push('自然と落ち着きを重視')}if(d.priority==='access'){sc.city+=4;re.push('交通・買い物を重視')}if(d.priority==='community'){sc.challenge+=3;sc.family++;re.push('地域とのつながりを重視')}
+ if(d.car==='yes'){sc.nature+=2;sc.family++}if(d.car==='sometimes'){sc.city++;sc.nature++}if(d.car==='no'){sc.city+=3;re.push('車依存を抑えたい')}
+ if(d.snow==='ok'){sc.nature+=2;sc.challenge++}if(d.snow==='learn'){sc.family++;sc.city++;re.push('冬の生活は事前確認したい')}if(d.snow==='concern'){sc.city+=2;re.push('雪の負担に不安')}
+ if(d.relation==='active')sc.challenge+=3;if(d.relation==='natural'){sc.family++;sc.nature++}if(d.relation==='private')sc.city+=2;
+ const type=Object.entries(sc).sort((a,b)=>b[1]-a[1])[0][0],top=Math.max(...Object.values(sc)),pct=Math.min(96,Math.max(55,Math.round(50+top*2.1)));
+ const p={city:['まちなか・便利暮らしタイプ','駅・買い物・通勤と冬の移動を実際に確認し、生活動線から住まいを選ぶのがおすすめです。',['駅周辺の住宅を比較','買い物・交通を現地確認','冬季の移動方法を確認']],family:['家族でじっくり定住タイプ','住まい、学校・保育、医療、仕事、支援制度を生活圏単位で比較すると判断しやすくなります。',['空き家・住宅取得を比較','子育て・医療環境を確認','家族で現地を歩く']],challenge:['地域参加・チャレンジタイプ','空き家活用、創業、地域活動との相性が高い傾向です。仕事と地域との接点を同時に探しましょう。',['空き家バンクを見る','仕事・創業情報を見る','地域イベントに参加']],nature:['自然とゆとり暮らしタイプ','自然環境を楽しみつつ、車、雪、通信、通勤など日常条件を現地で確かめることが重要です。',['住環境を現地確認','冬季交通と除雪を確認','通信・仕事環境を確認']]}[type];
+ const r=$('#diagnosisResult');r.innerHTML=`<p class="eyebrow">診断結果</p><h3>${p[0]}</h3><div class="score-row"><strong>加茂暮らし相性の目安</strong><strong>${pct}%</strong></div><div class="score-meter"><span style="width:${pct}%"></span></div><p>${p[1]}</p><div class="result-reasons">${re.slice(0,4).map(x=>`<div class="reason-pill">✓ ${esc(x)}</div>`).join('')}</div><h4>次に確認したいこと</h4><ol>${p[2].map(x=>`<li>${esc(x)}</li>`).join('')}</ol><div class="live-footer"><a class="btn primary" href="#aiConsult">AI相談で深掘り</a><a class="btn ghost" href="#liveData">最新情報を見る</a></div><p class="ai-state">※参考診断です。移住の適否を保証するものではありません。</p>`;r.classList.remove('hidden');r.scrollIntoView({behavior:'smooth',block:'center'});track('diagnosis_complete')})}
+
+function injectChecklist(){const anchor=$('#diagnosis');if(!anchor||$('#moveChecklist'))return;const s=document.createElement('section');s.id='moveChecklist';s.className='enhanced-section enhanced-soft';s.innerHTML=`<div class="enhanced-head"><p class="eyebrow">PREPARATION CHECK</p><h2>移住準備チェックリスト</h2><p>8項目で準備状況を確認。チェック内容はこの端末だけに保存します。</p></div><div class="check-card"><div class="check-progress" id="checkProgress">0 / 8 完了</div><div class="score-meter"><span id="checkMeter" style="width:0%"></span></div><div id="checkList" class="check-list">${['家族・同居予定者と移住目的を共有した','希望エリアと通勤・通学動線を確認した','賃貸・購入・空き家活用の優先順位を決めた','仕事・収入の見通しを確認した','子育て・医療・買い物環境を確認した','車・公共交通など移動手段を考えた','雪・暖房費・除雪を含めて冬の生活を考えた','現地訪問または移住相談の予定を立てた'].map(x=>`<label class="check-item"><input type="checkbox"> ${x}</label>`).join('')}</div><p id="checkAdvice"></p></div>`;anchor.after(s);const checks=$$('#checkList input');let saved=[];try{saved=JSON.parse(localStorage.getItem('kamoMoveChecklist')||'[]')}catch{}checks.forEach((x,i)=>{x.checked=!!saved[i];x.addEventListener('change',update)});update();function update(){const n=checks.filter(x=>x.checked).length;$('#checkProgress').textContent=`${n} / ${checks.length} 完了`;$('#checkMeter').style.width=`${n/checks.length*100}%`;$('#checkAdvice').textContent=n===8?'準備項目が一通り整理できています。次は公式窓口や現地訪問で条件を具体化しましょう。':n>=5?'かなり整理できています。未確認項目を埋めましょう。':'住まい・仕事・移動手段から優先して確認すると進めやすくなります。';localStorage.setItem('kamoMoveChecklist',JSON.stringify(checks.map(x=>x.checked)))}}
+
+function injectLiveData(){const anchor=$('#support');if(!anchor||$('#liveData'))return;const s=document.createElement('section');s.id='liveData';s.className='enhanced-section';s.innerHTML=`<div class="enhanced-head"><p class="eyebrow">LIVE KAMO DATA</p><h2>空き家・求人・イベントを検索</h2><p>バックエンド接続時は掲載元から最新情報を取得します。情報は変更されるため、申込・契約前に必ず掲載元で確認してください。</p></div><div class="data-tabs"><button class="data-tab active" data-dtab="akiyas">🏠 空き家</button><button class="data-tab" data-dtab="jobs">💼 求人・募集</button><button class="data-tab" data-dtab="events">🎪 イベント</button></div><div id="akiyas" class="data-panel active"><div class="live-toolbar"><select id="akType"><option value="">すべて</option><option value="居住">居住用</option><option value="土地">土地</option><option value="事業">事業用</option></select><input id="akKeyword" placeholder="地域・物件名で絞り込み"><button class="btn primary" id="loadAkiya">最新物件を取得</button></div><div id="akStatus" class="status">「最新物件を取得」を押してください。</div><div id="akGrid" class="live-grid"></div></div><div id="jobs" class="data-panel"><div class="live-toolbar"><input id="jobKeyword" placeholder="例：協力隊・採用"><button class="btn primary" id="loadJobs">求人・募集を検索</button></div><div id="jobStatus" class="status">加茂市の公開募集・地域おこし・採用情報などを検索します。</div><div id="jobGrid" class="live-grid"></div></div><div id="events" class="data-panel"><div class="live-toolbar"><input id="eventMonth" type="month"><button class="btn primary" id="loadEvents">イベントを取得</button></div><div id="eventStatus" class="status">月を選んでイベントを取得できます。</div><div id="eventGrid" class="live-grid"></div></div><div class="live-footer"><a target="_blank" rel="noopener" href="${CFG.officialAkiyaUrl}">LIFULL HOME'S 加茂市空き家バンク</a><a target="_blank" rel="noopener" href="${CFG.officialEventUrl}">加茂市イベント公式</a></div>`;anchor.before(s);
+ $$('.data-tab',s).forEach(b=>b.addEventListener('click',()=>{$$('.data-tab',s).forEach(x=>x.classList.remove('active'));$$('.data-panel',s).forEach(x=>x.classList.remove('active'));b.classList.add('active');$('#'+b.dataset.dtab)?.classList.add('active')}));
+ const now=new Date();$('#eventMonth').value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+ $('#loadAkiya').addEventListener('click',loadAkiyas);$('#akKeyword').addEventListener('input',renderAkiyas);$('#akType').addEventListener('change',renderAkiyas);$('#loadJobs').addEventListener('click',loadJobs);$('#loadEvents').addEventListener('click',loadEvents);
+ if(CFG.apiBase){loadAkiyas();loadEvents()}else{$('#akStatus').className='status warn';$('#akStatus').innerHTML=`リアルタイム取得用APIはまだ未接続です。現在の掲載元では加茂市の空き家が公開されています。<a target="_blank" rel="noopener" href="${CFG.officialAkiyaUrl}">公式掲載を開く →</a>`;$('#eventStatus').className='status warn';$('#eventStatus').textContent='イベント自動取得はAPI接続後に有効になります。'}
 }
+let AKIYA_CACHE=[];
+async function loadAkiyas(){if(!CFG.apiBase)return noApi('akStatus');setLoading('akStatus','akGrid','空き家情報を取得中…');try{const r=await fetch(api('/api/akiyas'));const d=await r.json();if(!r.ok)throw new Error(d.message||d.error);AKIYA_CACHE=d.items||[];$('#akStatus').className='status';$('#akStatus').textContent=`現在 ${d.total??AKIYA_CACHE.length}件掲載 / ${AKIYA_CACHE.length}件を読み込みました。最終取得 ${formatTime(d.fetchedAt)}`;renderAkiyas();track('akiyas_view')}catch(e){showError('akStatus',e)}}
+function renderAkiyas(){const g=$('#akGrid');if(!g)return;const q=($('#akKeyword')?.value||'').toLowerCase(),t=$('#akType')?.value||'';const items=AKIYA_CACHE.filter(x=>(!q||(x.title+x.location).toLowerCase().includes(q))&&(!t||x.title.includes(t)));g.innerHTML=items.length?items.map(x=>`<article class="live-card"><span class="source-badge">空き家バンク</span><h3>${esc(x.title)}</h3><p class="price">${esc(x.price||'要確認')}</p><p>${esc(x.location||'加茂市')}</p>${x.landArea?`<p class="meta">土地面積 ${esc(x.landArea)}</p>`:''}<a target="_blank" rel="noopener" href="${esc(x.url||CFG.officialAkiyaUrl)}">詳細・最新状況を確認 →</a></article>`).join(''):'<div class="status">条件に合う物件がありません。</div>'}
+async function loadJobs(){if(!CFG.apiBase)return noApi('jobStatus');setLoading('jobStatus','jobGrid','求人・募集情報を検索中…');try{const q=encodeURIComponent($('#jobKeyword').value.trim());const r=await fetch(api('/api/jobs?q='+q)),d=await r.json();if(!r.ok)throw new Error(d.message||d.error);$('#jobStatus').className='status';$('#jobStatus').textContent=`${d.items?.length||0}件の情報を表示。募集終了の場合があるため掲載元で確認してください。`;$('#jobGrid').innerHTML=(d.items||[]).map(x=>`<article class="live-card"><span class="source-badge">${esc(x.sourceLabel||'公開情報')}</span><h3>${esc(x.title)}</h3>${x.date?`<p class="meta">掲載 ${esc(x.date)}</p>`:''}<a target="_blank" rel="noopener" href="${esc(x.url)}">募集・検索ページを確認 →</a></article>`).join('');track('jobs_view')}catch(e){showError('jobStatus',e)}}
+async function loadEvents(){if(!CFG.apiBase)return noApi('eventStatus');setLoading('eventStatus','eventGrid','イベント情報を取得中…');try{const [y,m]=($('#eventMonth').value||'').split('-');const r=await fetch(api(`/api/events?year=${encodeURIComponent(y)}&month=${encodeURIComponent(Number(m))}`)),d=await r.json();if(!r.ok)throw new Error(d.message||d.error);$('#eventStatus').className='status';$('#eventStatus').textContent=`${d.items?.length||0}件を取得しました。`;$('#eventGrid').innerHTML=(d.items||[]).slice(0,30).map(x=>`<article class="live-card"><span class="source-badge">加茂市公式</span><h3>${esc(x.title)}</h3><p class="meta">${esc(x.date)}</p><a target="_blank" rel="noopener" href="${esc(x.url)}">イベント詳細 →</a></article>`).join('')||'<div class="status">この月のイベントを取得できませんでした。</div>';track('events_view')}catch(e){showError('eventStatus',e)}}
+function setLoading(status,grid,text){$('#'+status).className='status';$('#'+status).textContent=text;$('#'+grid).innerHTML='<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>'}function showError(id,e){$('#'+id).className='status error';$('#'+id).textContent='取得エラー: '+(e.message||e)}function noApi(id){$('#'+id).className='status warn';$('#'+id).textContent='リアルタイムAPIがまだ設定されていません。config.js の apiBase にデプロイ済みWorker URLを設定すると有効になります。'}function formatTime(s){if(!s)return'—';try{return new Date(s).toLocaleString('ja-JP')}catch{return s}}
 
-const diagnosis=$('#diagnosis');
-if(diagnosis){
-  const checklist=document.createElement('section');
-  checklist.id='moveChecklist';
-  checklist.className='enhanced-section enhanced-soft';
-  checklist.innerHTML=`
-    <div class="enhanced-head"><p class="eyebrow">PREPARATION CHECK</p><h2>移住準備チェックリスト</h2><p>「何から始めればいい？」を8項目で簡単に確認できます。</p></div>
-    <div class="check-card">
-      <div class="check-progress" id="checkProgress">0 / 8 完了</div>
-      <div class="score-meter"><span id="checkMeter" style="width:0%"></span></div>
-      <div class="check-list" id="checkList">
-        <label class="check-item"><input type="checkbox"> 家族・同居予定者と移住目的を共有した</label>
-        <label class="check-item"><input type="checkbox"> 希望エリアと通勤・通学動線を確認した</label>
-        <label class="check-item"><input type="checkbox"> 賃貸・購入・空き家活用の優先順位を決めた</label>
-        <label class="check-item"><input type="checkbox"> 仕事・収入の見通しを確認した</label>
-        <label class="check-item"><input type="checkbox"> 子育て・医療・買い物環境を確認した</label>
-        <label class="check-item"><input type="checkbox"> 車・公共交通など日常の移動手段を考えた</label>
-        <label class="check-item"><input type="checkbox"> 冬の雪・光熱費・除雪を含めて生活費を考えた</label>
-        <label class="check-item"><input type="checkbox"> 現地訪問または移住相談を行う予定を立てた</label>
-      </div>
-      <p id="checkAdvice">まずは気になる項目から確認してみましょう。</p>
-    </div>
-  `;
-  diagnosis.after(checklist);
-}
+function injectAI(){const anchor=$('#life')||$('#liveData');if(!anchor||$('#aiConsult'))return;const s=document.createElement('section');s.id='aiConsult';s.className='enhanced-section enhanced-soft';s.innerHTML=`<div class="enhanced-head"><p class="eyebrow">OPENAI MOVE SUPPORT</p><h2>AI移住相談</h2><p>OpenAI API接続時は、相談内容に合わせて加茂市移住の確認事項をAIが整理します。</p></div><div class="ai-layout"><div class="ai-card"><h3>相談内容</h3><div class="ai-options"><button type="button" class="ai-chip" data-q="家族で移住を検討しています。空き家と仕事を中心に教えてください。">家族で移住</button><button type="button" class="ai-chip" data-q="加茂市の空き家を活用して移住したいです。確認点を教えてください。">空き家</button><button type="button" class="ai-chip" data-q="加茂市へ移住して仕事を探す場合の進め方を教えてください。">仕事</button><button type="button" class="ai-chip" data-q="子育て世帯が加茂市へ移住する前に確認すべき点を教えてください。">子育て</button></div><textarea id="aiQuestion" placeholder="例：夫婦と子ども1人で半年以内の移住を考えています。住まい、仕事、雪の暮らしを知りたいです。"></textarea><button id="aiAsk" class="btn primary full" type="button">AIに相談する</button><p id="aiConnection" class="ai-state">${CFG.apiBase?'OpenAI APIバックエンドに接続します。':'API未接続のため、現在は簡易案内モードです。'}</p></div><div class="ai-card"><h3>AI回答</h3><div id="aiAnswer" class="ai-answer">相談内容を入力してください。制度・募集・物件は変わるため、回答後に公式情報も確認してください。</div></div></div>`;anchor.after(s);$$('.ai-chip',s).forEach(b=>b.addEventListener('click',()=>{$('#aiQuestion').value=b.dataset.q;$('#aiQuestion').focus()}));$('#aiAsk').addEventListener('click',askAI);const nav=$('#nav');if(nav&&!$('[href="#aiConsult"]',nav)){const a=document.createElement('a');a.href='#aiConsult';a.textContent='AI相談';nav.appendChild(a)}}
+async function askAI(){const q=$('#aiQuestion').value.trim(),out=$('#aiAnswer'),btn=$('#aiAsk');if(!q){out.textContent='相談内容を入力してください。';return}if(!CFG.apiBase){out.textContent=localAdvice(q)+'\n\n※本物のOpenAI APIを有効にするには、同梱した worker.js をサーバーレス環境へデプロイし、config.js の apiBase を設定してください。';return}btn.disabled=true;btn.textContent='AIが回答中…';out.textContent='相談内容を整理しています…';try{const r=await fetch(api('/api/ai'),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({question:q})});const d=await r.json();if(!r.ok)throw new Error(d.message||d.detail||d.error);out.textContent=d.answer||'回答を生成できませんでした。';track('ai_consult')}catch(e){out.textContent='AI接続エラー: '+e.message+'\n\n'+localAdvice(q)}finally{btn.disabled=false;btn.textContent='AIに相談する'}}
+function localAdvice(q){const a=[];if(/空き家|住宅|住まい|賃貸|購入/.test(q))a.push('🏠 住まい：空き家バンク、賃貸、住宅取得支援を比較し、通勤・買い物・除雪まで現地確認しましょう。');if(/仕事|求人|就職|起業|働/.test(q))a.push('💼 仕事：市内・近隣就職、地域おこし協力隊、創業、リモートなど複数ルートで探しましょう。');if(/子|家族|学校|保育/.test(q))a.push('👶 子育て：学校・保育・医療・送迎動線・支援制度を生活圏ごとに確認しましょう。');if(/雪|冬|車|交通/.test(q))a.push('❄️ 移動・冬：冬用タイヤ、除雪、暖房費、通勤時間を事前に確認しましょう。');return a.join('\n\n')||'🌿 「住まい・仕事・家族・移動・予算・移住時期」の6項目に分けて希望を整理すると相談しやすくなります。'}
 
-const life=$('#life');
-if(life){
-  const ai=document.createElement('section');
-  ai.id='aiConsult';
-  ai.className='enhanced-section enhanced-soft';
-  ai.innerHTML=`
-    <div class="enhanced-head"><p class="eyebrow">AI MOVE SUPPORT</p><h2>AI移住相談</h2><p>相談内容から、確認すべき情報と次の行動を整理します。</p></div>
-    <div class="ai-layout">
-      <div class="ai-card">
-        <h3>相談したいことを入力</h3>
-        <div class="ai-options">
-          <button type="button" class="ai-chip" data-aiq="空き家を探したい">🏠 空き家</button>
-          <button type="button" class="ai-chip" data-aiq="仕事や求人を探したい">💼 仕事</button>
-          <button type="button" class="ai-chip" data-aiq="子育て環境を知りたい">👶 子育て</button>
-          <button type="button" class="ai-chip" data-aiq="支援制度を知りたい">💴 支援制度</button>
-          <button type="button" class="ai-chip" data-aiq="移住前にイベントや地域を知りたい">🎪 地域・イベント</button>
-        </div>
-        <textarea id="aiQuestion" placeholder="例：家族3人で移住を検討しています。空き家と仕事を中心に何を確認すればいいですか？"></textarea>
-        <button id="aiAsk" type="button" class="btn primary full">相談内容を整理する</button>
-        <p class="fresh-note">現在はブラウザ内の案内ロジックで回答します。個人情報・機密情報は入力しないでください。</p>
-      </div>
-      <div class="ai-card">
-        <h3>相談アドバイス</h3>
-        <div id="aiAnswer" class="ai-answer">相談内容を入力すると、住まい・仕事・子育て・支援制度・現地確認の観点から次の行動を提案します。</div>
-      </div>
-    </div>
-  `;
-  life.after(ai);
-}
-
-const nav=$('#nav');
-if(nav){
-  const a=document.createElement('a'); a.href='#aiConsult'; a.textContent='AI相談'; nav.appendChild(a);
-  const b=document.createElement('a'); b.href='#infoHub'; b.textContent='空き家・求人'; nav.appendChild(b);
-}
-
-bindJumps();
-
-// --- 強化版 相性診断ロジック ---
-diagnosisForm?.addEventListener('submit',e=>{
-  e.preventDefault();
-  const d=Object.fromEntries(new FormData(e.target));
-  const scores={convenience:0,family:0,challenge:0,nature:0};
-  const reasons=[];
-
-  if(d.people==='family'){scores.family+=3;reasons.push('家族での生活基盤を重視');}
-  if(d.people==='couple'){scores.family+=1;scores.convenience+=1;}
-  if(d.people==='single'){scores.convenience+=2;scores.challenge+=1;}
-
-  if(d.home==='rent'){scores.convenience+=3;reasons.push('まず賃貸で暮らしを試したい');}
-  if(d.home==='buy'){scores.family+=3;reasons.push('住宅購入・定住志向が高い');}
-  if(d.home==='old'){scores.challenge+=4;scores.nature+=1;reasons.push('空き家・古民家活用に関心');}
-
-  if(d.work==='local'){scores.convenience+=2;scores.family+=1;}
-  if(d.work==='remote'){scores.nature+=2;scores.convenience+=1;reasons.push('リモートワークを想定');}
-  if(d.work==='startup'){scores.challenge+=4;reasons.push('起業・地域活動に関心');}
-
-  if(d.priority==='nature'){scores.nature+=4;reasons.push('自然・落ち着きを重視');}
-  if(d.priority==='access'){scores.convenience+=4;reasons.push('交通・買い物の便利さを重視');}
-  if(d.priority==='community'){scores.challenge+=3;scores.family+=1;reasons.push('地域とのつながりを重視');}
-
-  if(d.car==='yes'){scores.nature+=2;scores.family+=1;}
-  if(d.car==='sometimes'){scores.convenience+=1;scores.nature+=1;}
-  if(d.car==='no'){scores.convenience+=3;reasons.push('車に頼りすぎない生活を希望');}
-
-  if(d.snow==='ok'){scores.nature+=2;scores.challenge+=1;}
-  if(d.snow==='learn'){scores.family+=1;scores.convenience+=1;reasons.push('冬の暮らしは事前確認が必要');}
-  if(d.snow==='concern'){scores.convenience+=2;reasons.push('雪・冬季負担への不安あり');}
-
-  if(d.relation==='active'){scores.challenge+=3;}
-  if(d.relation==='natural'){scores.family+=1;scores.nature+=1;}
-  if(d.relation==='private'){scores.convenience+=2;}
-
-  const type=Object.entries(scores).sort((a,b)=>b[1]-a[1])[0][0];
-  const maxPossible=24;
-  const total=Math.min(100,Math.round((Object.values(scores).sort((a,b)=>b-a)[0]/maxPossible)*100+45));
-  const profiles={
-    convenience:{title:'まちなか・便利暮らしタイプ',body:'JR加茂駅や中心市街地に近い生活圏から検討し、買い物・通勤・冬の移動を実際に確認するのがおすすめです。',actions:['駅周辺の賃貸・住宅を比較','平日と休日の交通・買い物動線を確認','冬季の移動方法を確認','移住相談窓口で希望条件を共有']},
-    family:{title:'家族でじっくり定住タイプ',body:'住まいだけでなく、通勤・通学、医療、子育て、支援制度をセットで比較すると具体的な移住判断がしやすくなります。',actions:['住宅取得・空き家情報を確認','学校・保育・医療の生活圏を確認','利用できる支援制度を公式情報で確認','家族で現地を歩いてみる']},
-    challenge:{title:'地域参加・チャレンジタイプ',body:'空き家活用、創業、地域活動などと相性の良い傾向です。物件・仕事・地域との接点を同時に探すと移住後のイメージが具体化します。',actions:['空き家バンクを確認','創業・仕事・地域おこし情報を確認','地域イベントへ参加','現地の相談窓口で人や活動を紹介してもらう']},
-    nature:{title:'自然とゆとり暮らしタイプ',body:'自然環境を楽しみながら、自分に合う住環境を選ぶタイプです。車、雪、通信、通勤など日常条件を現地で確かめることが重要です。',actions:['自然環境と生活利便性の両方を現地確認','車・冬季交通・除雪を確認','通信環境と仕事環境を確認','生活費シミュレーターで予算を確認']}
-  };
-  const p=profiles[type];
-  const timingAdvice=d.timing==='3か月以内'?'移住時期が近いため、住まい・仕事・行政手続きを優先して具体化しましょう。':d.timing==='半年以内'?'半年以内なら、現地訪問と住まい・仕事探しを並行すると進めやすい時期です。':'まずは情報収集と現地体験から始め、希望条件を絞り込むのがおすすめです。';
-  const r=$('#diagnosisResult');
-  if(r){
-    r.innerHTML=`<p class="eyebrow">診断結果</p><h3>${p.title}</h3>
-      <div class="score-row"><strong>加茂暮らし相性の目安</strong><strong>${total}%</strong></div>
-      <div class="score-meter"><span style="width:${total}%"></span></div>
-      <p>${p.body}</p><p><b>移住時期：</b>${timingAdvice}</p>
-      <div class="result-reasons">${reasons.slice(0,4).map(x=>`<div class="reason-pill">✓ ${x}</div>`).join('')}</div>
-      <h4>次に確認したいこと</h4><ol>${p.actions.map(x=>`<li>${x}</li>`).join('')}</ol>
-      <div style="display:flex;gap:10px;flex-wrap:wrap"><a class="btn primary" href="#aiConsult">AI相談で深掘り</a><a class="btn ghost" href="#infoHub">空き家・求人を見る</a></div>
-      <p class="fresh-note">※この診断は移住検討の整理を目的とした参考情報で、移住の適否を保証するものではありません。</p>`;
-    r.classList.remove('hidden');
-    r.scrollIntoView({behavior:'smooth',block:'center'});
-  }
-});
-
-// --- チェックリスト ---
-const checkList=$('#checkList');
-const updateChecklist=()=>{
-  if(!checkList) return;
-  const checks=$$('input[type="checkbox"]',checkList);
-  const done=checks.filter(x=>x.checked).length;
-  $('#checkProgress').textContent=`${done} / ${checks.length} 完了`;
-  $('#checkMeter').style.width=`${done/checks.length*100}%`;
-  $('#checkAdvice').textContent=done===8?'準備項目が一通り確認できています。次は加茂市の公式窓口や現地訪問で具体的な条件を確認しましょう。':done>=5?'かなり整理できています。未確認項目を埋めると、移住相談がより具体的になります。':done>=2?'準備が進み始めています。住まい・仕事・移動手段を優先すると判断しやすくなります。':'まずは気になる項目から確認してみましょう。';
-  localStorage.setItem('kamoMoveChecklist',JSON.stringify(checks.map(x=>x.checked)));
-};
-if(checkList){
-  const savedChecks=JSON.parse(localStorage.getItem('kamoMoveChecklist')||'[]');
-  $$('input[type="checkbox"]',checkList).forEach((x,i)=>{x.checked=!!savedChecks[i];x.addEventListener('change',updateChecklist)});
-  updateChecklist();
-}
-
-// --- AI風相談（ブラウザ内ロジック） ---
-$$('.ai-chip').forEach(btn=>btn.addEventListener('click',()=>{
-  const q=$('#aiQuestion'); if(q){q.value=btn.dataset.aiq;q.focus();}
-}));
-$('#aiAsk')?.addEventListener('click',()=>{
-  const q=($('#aiQuestion')?.value||'').trim();
-  const out=$('#aiAnswer'); if(!out) return;
-  if(!q){out.textContent='相談内容を入力してください。例：「家族で移住したい。空き家と仕事を知りたい」';return;}
-  const topics=[];
-  if(/空き家|住宅|家|賃貸|購入|住まい/.test(q)) topics.push('🏠 住まい：空き家バンク、賃貸、住宅取得支援を比較し、通勤・買い物・除雪も含めて現地確認しましょう。');
-  if(/仕事|求人|就職|転職|起業|働/.test(q)) topics.push('💼 仕事：市内・近隣就職、地域おこし協力隊、創業、リモートなど複数ルートで探すと選択肢が広がります。');
-  if(/子育て|子ども|学校|保育|家族/.test(q)) topics.push('👶 子育て：学校・保育、医療、遊び場、送迎動線、利用できる支援制度を生活圏ごとに確認しましょう。');
-  if(/支援|補助|助成|お金|費用/.test(q)) topics.push('💴 支援制度：年度・年齢・世帯・転入時期などで条件が変わるため、申請前に必ず加茂市の最新公式情報を確認しましょう。');
-  if(/イベント|地域|交流|体験|知りたい/.test(q)) topics.push('🎪 地域を知る：イベントや移住体験は、地域の雰囲気や人との距離感を知る良い機会です。');
-  if(/車|交通|電車|通勤|移動/.test(q)) topics.push('🚃 移動：JR加茂駅の利用に加え、日常の買い物や冬季移動まで含めて車の必要性を確認しましょう。');
-  if(/雪|冬|寒/.test(q)) topics.push('❄️ 冬の暮らし：除雪、冬用タイヤ、暖房費、通勤時間などを移住前に確認すると安心です。');
-  if(topics.length===0) topics.push('🌿 まず「住まい・仕事・家族・移動・予算・移住時期」の6点に分けて希望を書き出すと、相談内容を整理しやすくなります。');
-  out.textContent=`ご相談：「${q}」\n\n${topics.join('\n\n')}\n\n次の一歩：\n1. 下の住まい・仕事・イベント情報から公式ページを確認\n2. 移住準備チェックリストで未確認項目を整理\n3. 具体的な制度・募集状況は加茂市の公式窓口へ確認\n\n※現在は生成AI APIではなく、ブラウザ内の案内ロジックによる試作機能です。`;
-});
-
-const calc=()=>{
-  const ids=['rent','food','utility','transport','other'];
-  const total=ids.reduce((s,id)=>s+(Number($('#'+id)?.value)||0),0);
-  if($('#monthlyTotal')) $('#monthlyTotal').textContent=total.toLocaleString()+'円';
-  if($('#annualTotal')) $('#annualTotal').textContent='年間 '+(total*12).toLocaleString()+'円';
-};
-$$('.calculator-card input').forEach(i=>i.addEventListener('input',calc));
-
-const modal=$('#modal');
-$('[data-modal="housingGrant"]')?.addEventListener('click',()=>modal?.classList.remove('hidden'));
-$('#closeModal')?.addEventListener('click',()=>modal?.classList.add('hidden'));
-modal?.addEventListener('click',e=>{if(e.target===modal)modal.classList.add('hidden')});
-$('#grantCheck')?.addEventListener('submit',e=>{
-  e.preventDefault();
-  const checked=$$('input[type=checkbox]',e.target).filter(x=>x.checked).length;
-  const total=$$('input[type=checkbox]',e.target).length;
-  const result=$('#grantResult');
-  if(result) result.textContent=checked===total
-    ?'入力した基本項目には該当する可能性があります。ただし制度条件は年度ごとに変わるため、必ず最新の公式要綱・窓口で確認してください。'
-    :`${checked}/${total}項目にチェック。未該当項目があります。例外や最新条件を公式窓口でご確認ください。`;
-});
-
-const form=$('#consultForm');
-if(form){
-  const saved=localStorage.getItem('kamoConsultMemo');
-  if(saved){try{const d=JSON.parse(saved);Object.entries(d).forEach(([k,v])=>{if(form.elements[k])form.elements[k].value=v})}catch{}}
-  $('#saveMemo')?.addEventListener('click',()=>{
-    const d=Object.fromEntries(new FormData(form));
-    localStorage.setItem('kamoConsultMemo',JSON.stringify(d));
-    alert('相談メモをこの端末に保存しました。');
-  });
-  form.addEventListener('submit',e=>{
-    e.preventDefault();
-    const d=Object.fromEntries(new FormData(form));
-    const subject=encodeURIComponent('加茂市への移住相談（KAMO LIFEから作成）');
-    const body=encodeURIComponent(`お名前：${d.name||'未入力'}\n現在のお住まい：${d.area||'未入力'}\n移住希望時期：${d.timing||'未入力'}\n相談分野：${d.topic||'未入力'}\n\n相談内容：\n${d.message||'未入力'}\n\n※加茂市移住相談アプリ（非公式試作版）から作成`);
-    location.href=`mailto:kikaku@city.kamo.niigata.jp?subject=${subject}&body=${body}`;
-  });
-}
-
-if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+function injectAdminLink(){const footer=document.querySelector('footer')||document.body;const a=document.createElement('a');a.href='admin.html';a.className='admin-pill';a.textContent='自治体向け管理画面';if(footer.tagName==='FOOTER')footer.appendChild(a);else a.style.position='fixed',a.style.right='12px',a.style.bottom='12px',footer.appendChild(a)}
+function bindCalculator(){const calc=()=>{const ids=['rent','food','utility','transport','other'];const total=ids.reduce((n,id)=>n+(Number($('#'+id)?.value)||0),0);if($('#monthlyTotal'))$('#monthlyTotal').textContent=total.toLocaleString()+'円';if($('#annualTotal'))$('#annualTotal').textContent='年間 '+(total*12).toLocaleString()+'円'};$$('.calculator-card input').forEach(i=>i.addEventListener('input',calc));calc()}
+function bindGrantModal(){const modal=$('#modal');$('[data-modal="housingGrant"]')?.addEventListener('click',()=>modal?.classList.remove('hidden'));$('#closeModal')?.addEventListener('click',()=>modal?.classList.add('hidden'));modal?.addEventListener('click',e=>{if(e.target===modal)modal.classList.add('hidden')});$('#grantCheck')?.addEventListener('submit',e=>{e.preventDefault();const all=$$('input[type=checkbox]',e.target),n=all.filter(x=>x.checked).length;$('#grantResult').textContent=n===all.length?'基本項目には該当する可能性があります。必ず最新の公式要件を確認してください。':`${n}/${all.length}項目にチェック。最新条件・例外を公式窓口でご確認ください。`})}
+function bindConsultForm(){const f=$('#consultForm');if(!f)return;try{const d=JSON.parse(localStorage.getItem('kamoConsultMemo')||'{}');Object.entries(d).forEach(([k,v])=>{if(f.elements[k])f.elements[k].value=v})}catch{}$('#saveMemo')?.addEventListener('click',()=>{localStorage.setItem('kamoConsultMemo',JSON.stringify(Object.fromEntries(new FormData(f))));alert('相談メモをこの端末に保存しました。')});f.addEventListener('submit',e=>{e.preventDefault();const d=Object.fromEntries(new FormData(f)),subject=encodeURIComponent('加茂市への移住相談（KAMO LIFEから作成）'),body=encodeURIComponent(`お名前：${d.name||'未入力'}\n現在のお住まい：${d.area||'未入力'}\n移住希望時期：${d.timing||'未入力'}\n相談分野：${d.topic||'未入力'}\n\n相談内容：\n${d.message||'未入力'}\n\n※KAMO LIFE（非公式試作版）から作成`);location.href=`mailto:kikaku@city.kamo.niigata.jp?subject=${subject}&body=${body}`;track('consult_mail')})}
+function track(event){if(!CFG.apiBase)return;fetch(api('/api/track'),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({event,path:location.pathname+location.hash})}).catch(()=>{})}
