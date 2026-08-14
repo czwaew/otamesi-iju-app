@@ -12,30 +12,28 @@
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="#home" aria-label="ホームへ">
-      <span class="brand-mark">🌿</span><span>KAMO LIFE</span>
-    </a>
+    <a class="brand" href="#home" aria-label="ホームへ"><span class="brand-mark">🌿</span><span>KAMO LIFE</span></a>
     <button id="menuBtn" class="menu-btn" aria-label="メニューを開く">☰</button>
-    <nav id="nav" class="nav">
-      <a href="#diagnosis">移住診断</a><a href="#support">支援制度</a><a href="#life">暮らし</a><a href="#consult">相談</a>
-    </nav>
+    <nav id="nav" class="nav"><a href="#diagnosis">移住診断</a><a href="#support">支援制度</a><a href="#life">暮らし</a><a href="#consult">相談</a></nav>
   </header>
 
   <main>
-    <section id="home" class="hero">
-      <div class="hero-overlay"></div>
-      <div class="hero-content">
-        <p class="eyebrow">新潟県のまんなか、ほどよい田舎</p>
-        <h1>加茂で見つける、<br>あなたらしい暮らし。</h1>
-        <p>住まい・仕事・子育て・支援制度を、ひとつの画面で分かりやすく。</p>
-        <div class="hero-actions">
-          <a class="btn primary" href="#diagnosis">3分で移住診断</a>
-          <a class="btn ghost" href="#consult">相談してみる</a>
-        </div>
-        <div class="hero-badges"><span>🏞 加茂山・加茂川</span><span>🚃 JR加茂駅</span><span>🏘 コンパクトなまち</span></div>
+    <section id="home" style="background:#0b1f16;color:#fff;padding:0 0 42px;overflow:hidden;">
+      <div style="position:relative;width:100%;aspect-ratio:16/9;max-height:78vh;background:#000;overflow:hidden;">
+        <iframe
+          src="https://www.youtube.com/embed/4geHlbPh2Ps?rel=0&modestbranding=1&playsinline=1"
+          title="加茂市 ナイアガラ花火"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowfullscreen
+          style="position:absolute;inset:0;width:100%;height:100%;border:0;">
+        </iframe>
       </div>
-      <div class="scenery" aria-hidden="true">
-        <div class="sun"></div><div class="mountain m1"></div><div class="mountain m2"></div><div class="river"></div><div class="bridge"></div>
+      <div style="width:min(1120px,90%);margin:0 auto;padding:34px 0 4px;">
+        <p class="eyebrow">KAMO CITY / NIAGARA FIREWORKS</p>
+        <h1 style="font-size:clamp(36px,6vw,70px);line-height:1.08;margin:10px 0 18px;">加茂で見つける、<br>あなたらしい暮らし。</h1>
+        <p style="font-size:clamp(16px,2vw,20px);max-width:720px;color:#e7f4eb;">ナイアガラ花火を入口に、加茂市の暮らし・住まい・仕事・子育て・支援制度をひとつの画面で分かりやすく。</p>
+        <div class="hero-actions"><a class="btn primary" href="#diagnosis">3分で移住診断</a><a class="btn ghost" href="#consult">相談してみる</a></div>
+        <div class="hero-badges"><span>🎆 ナイアガラ花火</span><span>🏞 加茂山・加茂川</span><span>🚃 JR加茂駅</span></div>
       </div>
     </section>
 
@@ -72,42 +70,17 @@
     <section id="life" class="section-pad soft-section">
       <div class="section-head"><p class="eyebrow">KAMO LIFE</p><h2>加茂市での暮らし</h2></div>
       <div class="tabs" role="tablist"><button class="tab active" data-tab="housing">🏠 住まい</button><button class="tab" data-tab="work">💼 仕事</button><button class="tab" data-tab="child">👶 子育て</button><button class="tab" data-tab="access">🚃 交通</button></div>
-      <div id="housing" class="tab-panel active">
-        <div class="panel-copy"><h3>住まい探し</h3><p>空き家バンク、民間賃貸、住宅購入を比較しながら検討できます。</p></div>
-        <div class="mini-cards"><article><b>空き家バンク</b><p>登録物件や利用条件を確認</p><a target="_blank" rel="noopener" href="https://www.city.kamo.niigata.jp/soshiki/kensetsu/kanri/">公式ページ</a></article><article><b>住宅取得</b><p>補助制度を使って購入を検討</p><a target="_blank" rel="noopener" href="https://www.city.kamo.niigata.jp/docs/36105.html">補助金詳細</a></article><article><b>まずは賃貸</b><p>駅周辺・生活圏を現地確認</p><button data-jump="#map">地図を見る</button></article></div>
-      </div>
+      <div id="housing" class="tab-panel active"><div class="panel-copy"><h3>住まい探し</h3><p>空き家バンク、民間賃貸、住宅購入を比較しながら検討できます。</p></div><div class="mini-cards"><article><b>空き家バンク</b><p>登録物件や利用条件を確認</p><a target="_blank" rel="noopener" href="https://www.city.kamo.niigata.jp/soshiki/kensetsu/kanri/">公式ページ</a></article><article><b>住宅取得</b><p>補助制度を使って購入を検討</p><a target="_blank" rel="noopener" href="https://www.city.kamo.niigata.jp/docs/36105.html">補助金詳細</a></article><article><b>まずは賃貸</b><p>駅周辺・生活圏を現地確認</p><button data-jump="#map">地図を見る</button></article></div></div>
       <div id="work" class="tab-panel"><div class="panel-copy"><h3>仕事と働き方</h3><p>市内企業への就職、近隣地域への通勤、リモートワーク、創業などを検討できます。</p></div><div class="mini-cards"><article><b>市内・近隣就職</b><p>ハローワークや求人サイトを活用</p></article><article><b>創業チャレンジ</b><p>市の創業支援制度を確認</p><a target="_blank" rel="noopener" href="https://www.city.kamo.niigata.jp/shisei/hojo/">補助金一覧</a></article><article><b>地域おこし協力隊</b><p>地域課題に取り組みながら定住へ</p><a target="_blank" rel="noopener" href="https://www.city.kamo.niigata.jp/ijyu/">募集情報</a></article></div></div>
       <div id="child" class="tab-panel"><div class="panel-copy"><h3>子育て・教育</h3><p>保育、学校、医療、遊び場など、家族での生活に必要な情報を確認しましょう。</p></div><div class="mini-cards"><article><b>自然の遊び場</b><p>加茂山公園や加茂川が身近</p></article><article><b>相談窓口</b><p>妊娠・出産・子育ての行政情報</p><a target="_blank" rel="noopener" href="https://www.city.kamo.niigata.jp/lifeevent/kosodate/">子育て情報</a></article><article><b>家族向け支援</b><p>対象となる手当・助成を確認</p><a target="_blank" rel="noopener" href="https://www.city.kamo.niigata.jp/lifeevent/kosodate/">制度を探す</a></article></div></div>
       <div id="access" class="tab-panel"><div class="panel-copy"><h3>交通・アクセス</h3><p>JR加茂駅を中心に、市街地と自然が近いコンパクトな生活圏です。通勤先や冬季の移動も現地で確認するのがおすすめです。</p></div><div class="mini-cards"><article><b>鉄道</b><p>JR信越本線 加茂駅</p></article><article><b>自動車</b><p>買い物・郊外移動に便利</p></article><article><b>現地確認</b><p>平日と休日、冬季の移動をチェック</p></article></div></div>
     </section>
 
-    <section class="section-pad calculator-section">
-      <div class="section-head"><p class="eyebrow">SIMULATOR</p><h2>月々の生活費シミュレーター</h2><p>入力した金額をもとに概算します。実際の費用は世帯・物件・移動手段で異なります。</p></div>
-      <div class="calculator-card">
-        <label>家賃・住宅費<input id="rent" type="number" value="60000" min="0">円</label>
-        <label>食費<input id="food" type="number" value="50000" min="0">円</label>
-        <label>光熱・通信<input id="utility" type="number" value="30000" min="0">円</label>
-        <label>交通・車両<input id="transport" type="number" value="35000" min="0">円</label>
-        <label>その他<input id="other" type="number" value="25000" min="0">円</label>
-        <div class="total"><span>月額合計</span><strong id="monthlyTotal">200,000円</strong><small id="annualTotal">年間 2,400,000円</small></div>
-      </div>
-    </section>
+    <section class="section-pad calculator-section"><div class="section-head"><p class="eyebrow">SIMULATOR</p><h2>月々の生活費シミュレーター</h2><p>入力した金額をもとに概算します。実際の費用は世帯・物件・移動手段で異なります。</p></div><div class="calculator-card"><label>家賃・住宅費<input id="rent" type="number" value="60000" min="0">円</label><label>食費<input id="food" type="number" value="50000" min="0">円</label><label>光熱・通信<input id="utility" type="number" value="30000" min="0">円</label><label>交通・車両<input id="transport" type="number" value="35000" min="0">円</label><label>その他<input id="other" type="number" value="25000" min="0">円</label><div class="total"><span>月額合計</span><strong id="monthlyTotal">200,000円</strong><small id="annualTotal">年間 2,400,000円</small></div></div></section>
 
-    <section id="map" class="map-section">
-      <div class="map-copy"><p class="eyebrow">MAP</p><h2>加茂市を地図で見る</h2><p>駅・市役所・加茂山公園・加茂川周辺など、生活動線を確認できます。</p><a class="btn primary" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=%E6%96%B0%E6%BD%9F%E7%9C%8C%E5%8A%A0%E8%8C%82%E5%B8%82">Googleマップで開く</a></div>
-      <iframe title="加茂市地図" src="https://www.openstreetmap.org/export/embed.html?bbox=139.02%2C37.62%2C139.16%2C37.70&layer=mapnik&marker=37.666%2C139.04" loading="lazy"></iframe>
-    </section>
+    <section id="map" class="map-section"><div class="map-copy"><p class="eyebrow">MAP</p><h2>加茂市を地図で見る</h2><p>駅・市役所・加茂山公園・加茂川周辺など、生活動線を確認できます。</p><a class="btn primary" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=%E6%96%B0%E6%BD%9F%E7%9C%8C%E5%8A%A0%E8%8C%82%E5%B8%82">Googleマップで開く</a></div><iframe title="加茂市地図" src="https://www.openstreetmap.org/export/embed.html?bbox=139.02%2C37.62%2C139.16%2C37.70&layer=mapnik&marker=37.666%2C139.04" loading="lazy"></iframe></section>
 
-    <section id="consult" class="section-pad consult-section">
-      <div class="consult-card"><div><p class="eyebrow">CONSULTATION</p><h2>移住相談メモを作成</h2><p>相談内容を整理して、加茂市の担当窓口へメールで送れます。入力内容は端末内に一時保存できます。</p></div>
-      <form id="consultForm">
-        <div class="two-col"><label>お名前<input name="name" autocomplete="name" placeholder="加茂 太郎"></label><label>現在のお住まい<input name="area" placeholder="新潟市／東京都など"></label></div>
-        <div class="two-col"><label>移住希望時期<select name="timing"><option>未定</option><option>3か月以内</option><option>半年以内</option><option>1年以内</option></select></label><label>相談分野<select name="topic"><option>総合相談</option><option>住まい</option><option>仕事</option><option>子育て</option><option>支援制度</option></select></label></div>
-        <label>相談内容<textarea name="message" rows="6" placeholder="家族3人で移住を検討しています。中古住宅と仕事について相談したいです。"></textarea></label>
-        <div class="form-actions"><button type="button" id="saveMemo" class="btn secondary">端末に保存</button><button type="submit" class="btn primary">メールを作成</button></div>
-        <p class="contact-note">政策推進課：0256-52-0080 ／ kikaku@city.kamo.niigata.jp</p>
-      </form></div>
-    </section>
+    <section id="consult" class="section-pad consult-section"><div class="consult-card"><div><p class="eyebrow">CONSULTATION</p><h2>移住相談メモを作成</h2><p>相談内容を整理して、加茂市の担当窓口へメールで送れます。入力内容は端末内に一時保存できます。</p></div><form id="consultForm"><div class="two-col"><label>お名前<input name="name" autocomplete="name" placeholder="加茂 太郎"></label><label>現在のお住まい<input name="area" placeholder="新潟市／東京都など"></label></div><div class="two-col"><label>移住希望時期<select name="timing"><option>未定</option><option>3か月以内</option><option>半年以内</option><option>1年以内</option></select></label><label>相談分野<select name="topic"><option>総合相談</option><option>住まい</option><option>仕事</option><option>子育て</option><option>支援制度</option></select></label></div><label>相談内容<textarea name="message" rows="6" placeholder="家族3人で移住を検討しています。中古住宅と仕事について相談したいです。"></textarea></label><div class="form-actions"><button type="button" id="saveMemo" class="btn secondary">端末に保存</button><button type="submit" class="btn primary">メールを作成</button></div><p class="contact-note">政策推進課：0256-52-0080 ／ kikaku@city.kamo.niigata.jp</p></form></div></section>
   </main>
 
   <footer><b>KAMO LIFE</b><p>加茂市移住相談Webアプリ（非公式試作版）</p><p class="small">掲載情報は2026年7月時点の公開情報を参考にしています。制度の利用時は必ず加茂市公式サイト・担当窓口で最新条件をご確認ください。</p></footer>
