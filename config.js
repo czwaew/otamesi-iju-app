@@ -1,9 +1,18 @@
 // KAMO LIFE runtime configuration
-// Cloudflare Worker等をデプロイした後、apiBaseにそのURLを設定してください。
-// 例: https://kamo-life-api.example.workers.dev
+// Cloudflare Worker production endpoint
 window.KAMO_CONFIG = {
-  apiBase: "",
+  apiBase: "https://otamesi-iju-app.nbmgvcy27n.workers.dev",
   officialAkiyaUrl: "https://www.homes.co.jp/akiyabank/niigata/kamo/",
   officialEventUrl: "https://www.city.kamo.niigata.jp/event/",
   officialMigrationUrl: "https://www.city.kamo.niigata.jp/ijyu/"
 };
+
+// BMC / Value Proposition experience
+(function loadStrategy(){
+  if (document.querySelector('script[data-kamo-strategy]')) return;
+  const s = document.createElement('script');
+  s.src = 'strategy.js?v=1';
+  s.defer = true;
+  s.dataset.kamoStrategy = '1';
+  document.head.appendChild(s);
+})();
