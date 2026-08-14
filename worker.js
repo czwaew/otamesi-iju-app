@@ -13,7 +13,7 @@ export default {
 
     try {
       let response;
-      if (url.pathname === "/api/health") response = json({ ok: true, service: "KAMO LIFE API" });
+      if (url.pathname === "/api/health") response = json({ ok: true, service: "KAMO LIFE API", aiConfigured: !!String(env.OPENAI_API_KEY || "").trim(), model: env.OPENAI_MODEL || "gpt-5-mini" });
       else if (url.pathname === "/api/ai" && request.method === "POST") response = await aiConsult(request, env);
       else if (url.pathname === "/api/akiyas") response = await fetchAkiyas();
       else if (url.pathname === "/api/events") response = await fetchEvents(url);
@@ -45,10 +45,13 @@ function clean(s="") { return s.replace(/<[^>]+>/g," ").replace(/&nbsp;|&#160;/g
 function abs(base, href="") { try { return new URL(href, base).href; } catch { return base; } }
 
 async function aiConsult(request, env) {
-  if (!env.OPENAI_API_KEY) return json({ error:"openai_not_configured", message:"OPENAI_API_KEY が設定されていません。" }, 503);
-  const body = await request.json();
+  const apiKey = String(env.OPENAI_API_KEY || "").trim();
+  if (!apiKey) return json({ error:"openai_not_configured", message:"OPENAI_API_KEY が設定されていません。" }, 503);
+  if (!apiKey.startsWith("sk-")) return json({ error:"openai_key_invalid_format", message:"OPENAI_API_KEY の形式が正しくありません。OpenAI Platformで新しいSecret keyを作成し、Cloudflare Secretへ貼り付けてください。" }, 503);
+
+  const body = await request.json().catch(()=>({}));
   const question = String(body.question || "").trim().slice(0, 3000);
-  if (!question) return json({ error:"question_required" }, 400);
+  if (!question) return json({ error:"question_required", message:"相談内容を入力してください。" }, 400);
 
   const system = `あなたは新潟県加茂市への移住検討者を支援する案内AIです。\n`+
     `回答は日本語で、住まい、仕事、子育て、交通、雪国生活、支援制度、現地確認の観点から具体的に整理してください。\n`+
@@ -56,20 +59,31 @@ async function aiConsult(request, env) {
     `医療・法律・税務などの専門判断は専門窓口への確認を促してください。\n`+
     `個人情報の入力を求めないでください。回答は700文字程度まで、見出しと箇条書きで読みやすくしてください。`;
 
-  const r = await fetch("https://api.openai.com/v1/responses", {
-    method:"POST",
-    headers:{"authorization":`Bearer ${env.OPENAI_API_KEY}`,"content-type":"application/json"},
-    body:JSON.stringify({
-      model: env.OPENAI_MODEL || "gpt-5-mini",
-      instructions: system,
-      input: question,
-      max_output_tokens: 900
-    })
-  });
-  const data = await r.json();
-  if (!r.ok) return json({ error:"openai_error", status:r.status, detail:data?.error?.message || "OpenAI API error" }, 502);
+  let r;
+  try {
+    r = await fetch("https://api.openai.com/v1/responses", {
+      method:"POST",
+      headers:{"authorization":`Bearer ${apiKey}`,"content-type":"application/json"},
+      body:JSON.stringify({
+        model: String(env.OPENAI_MODEL || "gpt-5-mini").trim(),
+        instructions: system,
+        input: question,
+        max_output_tokens: 900
+      })
+    });
+  } catch (e) {
+    return json({ error:"openai_network_error", message:"OpenAI APIへの接続に失敗しました。", detail:String(e?.message || e) }, 502);
+  }
+
+  const raw = await r.text();
+  let data = {};
+  try { data = JSON.parse(raw); } catch { data = { raw: raw.slice(0, 500) }; }
+  if (!r.ok) {
+    const detail = data?.error?.message || data?.message || `OpenAI API error (${r.status})`;
+    return json({ error:"openai_error", status:r.status, message:detail, detail }, 502);
+  }
   const text = data.output_text || (data.output || []).flatMap(x=>x.content||[]).filter(x=>x.type==="output_text").map(x=>x.text).join("\n");
-  return json({ answer:text || "回答を生成できませんでした。", model:env.OPENAI_MODEL || "gpt-5-mini" });
+  return json({ answer:text || "回答を生成できませんでした。", model:String(env.OPENAI_MODEL || "gpt-5-mini").trim() });
 }
 
 async function fetchAkiyas() {
@@ -104,11 +118,6 @@ async function fetchEvents(url) {
   if (!r.ok) return json({ items:[], source, error:"source_unavailable" }, 502);
   const html = await r.text();
   const items=[];
-  let currentDay="";
-  for (const part of html.split(/(<h2[^>]*>|<h3[^>]*>)/i)) {
-    const day = clean((part.match(/(\d{1,2})月(\d{1,2})日/)||[])[0]||"");
-    if(day){currentDay=day;continue;}
-  }
   const dayBlocks=[...html.matchAll(/(\d{1,2})月(\d{1,2})日[\s\S]*?(?=(?:\d{1,2})月(?:\d{1,2})日|<footer|$)/gi)];
   for(const b of dayBlocks){
     const date=`${y}-${String(b[1]).padStart(2,"0")}-${String(b[2]).padStart(2,"0")}`;
